@@ -1,6 +1,4 @@
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { selectVisibleItems } from "../state";
 
 export interface RedditItem {
     /**
@@ -78,10 +76,16 @@ export async function loadRedditPage(options: {
 }
 
 export async function saveLocalPages(subreddit: string, pages: RedditPage[]) {
+    const AsyncStorage = (
+        await import("@react-native-async-storage/async-storage")
+    ).default;
     await AsyncStorage.setItem(`pages.${subreddit}`, JSON.stringify(pages));
 }
 
 export async function loadLocalPages(subreddit: string) {
+    const AsyncStorage = (
+        await import("@react-native-async-storage/async-storage")
+    ).default;
     const item = await AsyncStorage.getItem(`pages.${subreddit}`);
     if (item) {
         return JSON.parse(item) as RedditPage[];

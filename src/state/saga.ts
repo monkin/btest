@@ -7,7 +7,7 @@ import {
     takeLeading,
     select,
     delay,
-} from "typed-redux-saga";
+} from "typed-redux-saga/macro";
 import { getType } from "typesafe-actions";
 import { loadLocalPages, loadRedditPage } from "../api";
 import {
@@ -19,6 +19,8 @@ import {
     decLoadingCounter,
     checkForRedditUpdates,
     updateRedditPage,
+    setErrorFlag,
+    clearErrorFlag,
 } from "./actions";
 import { selectLastItemId, selectPageToUpdate } from "./selectors";
 
@@ -30,39 +32,41 @@ export function displayError(error: Error) {
 
 const subreddit = "programming";
 
+export function* checkForUpdates() {
+    while (true) {
+        try {
+            const time = yield* call(Date.now);
+            const i = (yield* select(selectPageToUpdate))(time);
+
+            // if any page needs to be updated
+            if (i !== null) {
+                const page = yield* call(loadRedditPage, {
+                    subreddit: subreddit,
+                    from: i.from,
+                });
+
+                const n = (yield* select(selectPageToUpdate))(time);
+
+                // if pages were not updated during request
+                if (n?.index === i.index && n.from === i.from) {
+                    yield* put(updateRedditPage(i.index, page));
+                }
+            } else {
+                break;
+            }
+        } catch (error) {
+            yield call(displayError, error);
+            yield* delay(2000);
+        }
+    }
+}
+
 /**
  * Check that visible pages are not older than one minute
  */
 export function* updateSaga() {
     while (true) {
-        takeLeading(getType(checkForRedditUpdates), function* () {
-            while (true) {
-                try {
-                    const time = yield* call(Date.now);
-                    const i = (yield* select(selectPageToUpdate))(time);
-
-                    // if any page needs to be updated
-                    if (i !== null) {
-                        const page = yield* call(loadRedditPage, {
-                            subreddit: subreddit,
-                            from: i.from,
-                        });
-
-                        const n = (yield* select(selectPageToUpdate))(time);
-
-                        // if pages were not updated during request
-                        if (n?.index === i.index && n.from === i.from) {
-                            yield* put(updateRedditPage(i.index, page));
-                        }
-                    } else {
-                        break;
-                    }
-                } catch (error) {
-                    yield call(displayError, error);
-                    yield* delay(2000);
-                }
-            }
-        });
+        yield takeLeading(getType(checkForRedditUpdates), checkForUpdates);
     }
 }
 
@@ -80,9 +84,12 @@ export function* loadPage(from?: string) {
                     from: from,
                 });
 
+                yield* put(clearErrorFlag()); // looks like we have network connection
+
                 return page;
             } catch (error) {
-                yield call(displayError, error);
+                yield* put(setErrorFlag());
+                yield* call(displayError, error);
                 yield* delay(2000); // delay next request
             }
         }

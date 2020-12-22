@@ -24,3 +24,6 @@ export const setVisibleItems = createAction(
 
 export const incLoadingCounter = createAction("loading-counter/inc")();
 export const decLoadingCounter = createAction("loading-counter/dec")();
+
+export const setErrorFlag = createAction("error-flag/set")();
+export const clearErrorFlag = createAction("error-flag/clear")();
