@@ -44,7 +44,6 @@ function RedditListConnected() {
 
 export default function App() {
     const store = React.useMemo(createBtestStore, []);
-    // React.useMemo(() => import("./state"), []);
     return (
         <Provider store={store}>
             <StatusBar />

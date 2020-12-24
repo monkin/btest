@@ -29,6 +29,7 @@ import {
     selectPageToUpdate,
     selectRedditPages,
 } from "./selectors";
+import SplashScreen from "react-native-splash-screen";
 
 export function displayError(error: Error) {
     showMessage({
@@ -125,6 +126,10 @@ export function* loadNextPageSaga() {
                     yield* put(saveRedditPages());
                     return;
                 }
+
+                if (!lastItemId) {
+                    yield* call(SplashScreen.hide);
+                }
             } catch (error) {
                 yield call(displayError, error);
             }
@@ -168,6 +173,7 @@ export function* btestSaga() {
     const storedPages = yield* call(loadLocalPages, subredditName);
     if (storedPages) {
         yield* put(setRedditPages(storedPages));
+        yield* call(SplashScreen.hide);
     } else {
         // Request first page from server if nothig found locally
         yield* put(loadNextRedditPage());
