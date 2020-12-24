@@ -17,8 +17,7 @@ Use `npm run android` to start, `npm test` to run tests.
 * Load top posts from 'programming' subreddit
 * It "has infinity scrolling" with 20 items per page loaded at once
 * Show splash screen during posts loading
-* Cache posts in 'async-storage'
-* Use data from 'async-storage' if network is not available
+* Save posts to 'async-storage' and use that data at start or if network is not available
 * Check for updates every minute
 
 Feel free to write at monkin.andrey@gmail.com in case of any questions.
