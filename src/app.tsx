@@ -16,17 +16,17 @@ import { RedditItem } from "./api";
 function RedditListConnected() {
     const dispatch = useDispatch();
     const {
-        onScroll,
         onLoadMore,
         onRefresh,
         onViewableItemsChange,
     } = React.useMemo(() => {
         return {
-            onScroll: () => dispatch(checkForRedditUpdates()),
             onRefresh: () => dispatch(refreshRedditPages()),
             onLoadMore: () => dispatch(loadNextRedditPage()),
-            onViewableItemsChange: (items: RedditItem[]) =>
-                dispatch(setVisibleItems(items)),
+            onViewableItemsChange: (items: RedditItem[]) => {
+                dispatch(setVisibleItems(items));
+                dispatch(checkForRedditUpdates());
+            },
         };
     }, [dispatch]);
 
@@ -37,7 +37,6 @@ function RedditListConnected() {
             onRefresh={onRefresh}
             onLoadMore={onLoadMore}
             onViewableItemsChange={onViewableItemsChange}
-            onScroll={onScroll}
         />
     );
 }

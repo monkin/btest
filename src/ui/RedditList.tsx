@@ -10,7 +10,6 @@ export interface RedditListProps {
     onRefresh: () => void;
     onLoadMore: () => void;
     onViewableItemsChange: (items: RedditItem[]) => void;
-    onScroll: () => void;
 }
 
 export function RedditList({
@@ -19,7 +18,6 @@ export function RedditList({
     onLoadMore,
     refreshing,
     onViewableItemsChange,
-    onScroll,
 }: RedditListProps) {
     const handleViewableItemsChange = useCallback(
         ({
@@ -42,7 +40,6 @@ export function RedditList({
             refreshing={refreshing}
             onEndReached={onLoadMore}
             onViewableItemsChanged={handleViewableItemsChange}
-            onScroll={onScroll}
         />
     );
 }

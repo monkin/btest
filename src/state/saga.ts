@@ -5,9 +5,10 @@ import {
     takeLeading,
     select,
     delay,
+    takeLatest,
 } from "typed-redux-saga/macro";
 import { getType } from "typesafe-actions";
-import { loadLocalPages, loadRedditPage } from "../api";
+import { loadLocalPages, loadRedditPage, saveLocalPages } from "../api";
 import {
     appendRedditPage,
     refreshRedditPages,
@@ -19,9 +20,14 @@ import {
     updateRedditPage,
     setErrorFlag,
     clearErrorFlag,
+    saveRedditPages,
 } from "./actions";
 import { refreshInterval, subredditName } from "./const";
-import { selectLastItemId, selectPageToUpdate } from "./selectors";
+import {
+    selectLastItemId,
+    selectPageToUpdate,
+    selectRedditPages,
+} from "./selectors";
 
 export function displayError(error: Error) {
     setTimeout(() => {
@@ -47,6 +53,7 @@ export function* checkForUpdates() {
                 // if pages were not updated during request
                 if (n?.index === i.index && n.after === i.after) {
                     yield* put(updateRedditPage(i.index, page));
+                    yield* put(saveRedditPages());
                 }
             } else {
                 break;
@@ -90,7 +97,7 @@ export function* loadPage(after?: string) {
         }
 
         throw new Error(
-            `Failed to load subreddit '${subredditName}' starting from '${from}'`,
+            `Failed to load subreddit '${subredditName}' starting from '${after}'`,
         );
     } finally {
         yield* put(decLoadingCounter());
@@ -113,6 +120,7 @@ export function* loadNextPageSaga() {
                 // repeat otherwise
                 if (lastItemId === updatedItemId) {
                     yield* put(appendRedditPage(page));
+                    yield* put(saveRedditPages());
                     return;
                 }
             } catch (error) {
@@ -135,6 +143,16 @@ export function* refreshSaga() {
 }
 
 /**
+ * Save loaded pages to local storage
+ */
+export function* saveLocalPagesSaga() {
+    yield* takeLatest(getType(saveRedditPages), function* () {
+        const pages = yield* select(selectRedditPages);
+        yield* call(saveLocalPages, subredditName, pages);
+    });
+}
+
+/**
  * Main saga that init app and start other sagas
  */
 export function* btestSaga() {
@@ -142,6 +160,7 @@ export function* btestSaga() {
     yield* fork(updateSaga);
     yield* fork(loadNextPageSaga);
     yield* fork(refreshSaga);
+    yield* fork(saveLocalPagesSaga);
 
     // Trying to load locally stored pages
     const storedPages = yield* call(loadLocalPages, subredditName);

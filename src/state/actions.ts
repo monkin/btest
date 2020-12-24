@@ -16,6 +16,7 @@ export const appendRedditPage = createAction(
 export const refreshRedditPages = createAction("reddit/refresh-pages")();
 export const loadNextRedditPage = createAction("reddit/load-next-page")();
 export const checkForRedditUpdates = createAction("reddit/check-for-updates")();
+export const saveRedditPages = createAction("reddit/save-reddit-pages")();
 
 export const setVisibleItems = createAction(
     "visible-items/set",
