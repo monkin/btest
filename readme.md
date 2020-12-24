@@ -2,7 +2,7 @@
 
 Test task made with 'react-native'.
 
-Most probably it works only on Android, because I had no Apple devices to develop and test.
+Most probably it works only on Android, because I had no Apple devices to develop and test with.
 
 Redux and typed-redux-saga are used as a state management solution.
 
