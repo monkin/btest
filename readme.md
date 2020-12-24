@@ -6,7 +6,7 @@ Most probably it works only on Android, because I had no Apple devices to develo
 
 Redux and typed-redux-saga are used as a state management solution.
 
-Some tests could be found here: https://github.com/monkin/btest/tree/master/src/state/__tests__
+Some tests could be found here: <https://github.com/monkin/btest/tree/master/src/state/__tests__>
 
 ## How to run
 
