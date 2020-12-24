@@ -20,7 +20,7 @@ describe("loadPage", () => {
         expect(gen.next().value).toEqual(
             call(loadRedditPage, {
                 subreddit: "programming",
-                from: undefined,
+                after: undefined,
             }),
         );
     });
@@ -41,7 +41,7 @@ describe("loadPage", () => {
         expect(gen.next().value).toEqual(
             call(loadRedditPage, {
                 subreddit: "programming",
-                from: undefined,
+                after: undefined,
             }),
         );
     });

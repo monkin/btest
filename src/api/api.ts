@@ -47,17 +47,18 @@ export namespace RedditPage {
 export async function loadRedditPage(options: {
     subreddit: string;
     limit?: number;
-    from?: string;
+    after?: string;
     timeout?: number;
 }): Promise<RedditPage> {
-    const { subreddit, limit = 20, from, timeout = 10_000 } = options;
+    const { subreddit, limit = 20, after, timeout = 10000 } = options;
     const response = await axios.get<RedditResponse>(
         `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/top.json`,
         {
             timeout: timeout,
-            data: { from, limit },
+            params: { after, limit },
         },
     );
+    console.log(`Page loaded: ${JSON.stringify(response.config)}`);
     return {
         responseTime: Date.now(),
         items: response.data.data.children.map(

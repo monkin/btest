@@ -1,9 +1,7 @@
 import {
-    all,
     call,
     fork,
     put,
-    takeLatest,
     takeLeading,
     select,
     delay,
@@ -22,6 +20,7 @@ import {
     setErrorFlag,
     clearErrorFlag,
 } from "./actions";
+import { refreshInterval, subredditName } from "./const";
 import { selectLastItemId, selectPageToUpdate } from "./selectors";
 
 export function displayError(error: Error) {
@@ -29,8 +28,6 @@ export function displayError(error: Error) {
         throw error;
     });
 }
-
-const subreddit = "programming";
 
 export function* checkForUpdates() {
     while (true) {
@@ -41,14 +38,14 @@ export function* checkForUpdates() {
             // if any page needs to be updated
             if (i !== null) {
                 const page = yield* call(loadRedditPage, {
-                    subreddit: subreddit,
-                    from: i.from,
+                    subreddit: subredditName,
+                    after: i.after,
                 });
 
                 const n = (yield* select(selectPageToUpdate))(time);
 
                 // if pages were not updated during request
-                if (n?.index === i.index && n.from === i.from) {
+                if (n?.index === i.index && n.after === i.after) {
                     yield* put(updateRedditPage(i.index, page));
                 }
             } else {
@@ -65,23 +62,21 @@ export function* checkForUpdates() {
  * Check that visible pages are not older than one minute
  */
 export function* updateSaga() {
-    while (true) {
-        yield takeLeading(getType(checkForRedditUpdates), checkForUpdates);
-    }
+    yield* takeLeading(getType(checkForRedditUpdates), checkForUpdates);
 }
 
 /**
  * Load page with 5 attempts in case of network error
  */
-export function* loadPage(from?: string) {
+export function* loadPage(after?: string) {
     yield* put(incLoadingCounter());
     try {
         // try five times in case of network errors
         for (let i = 0; i < 5; i++) {
             try {
                 const page = yield* call(loadRedditPage, {
-                    subreddit: subreddit,
-                    from: from,
+                    subreddit: subredditName,
+                    after: after,
                 });
 
                 yield* put(clearErrorFlag()); // looks like we have network connection
@@ -95,7 +90,7 @@ export function* loadPage(from?: string) {
         }
 
         throw new Error(
-            `Failed to load subreddit '${subreddit}' starting from '${from}'`,
+            `Failed to load subreddit '${subredditName}' starting from '${from}'`,
         );
     } finally {
         yield* put(decLoadingCounter());
@@ -106,38 +101,36 @@ export function* loadPage(from?: string) {
  * Listen for next page loading requests
  */
 export function* loadNextPageSaga() {
-    while (true) {
-        // Ignore requests while loading the next page
-        yield* takeLeading(getType(loadNextRedditPage), function* () {
-            while (true) {
-                try {
-                    const lastItemId = yield* select(selectLastItemId);
-                    const page = yield* loadPage(lastItemId ?? undefined);
-                    const updatedItemId = yield* select(selectLastItemId);
+    // Ignore requests while loading the next page
+    yield* takeLeading(getType(loadNextRedditPage), function* () {
+        while (true) {
+            try {
+                const lastItemId = yield* select(selectLastItemId);
+                const page = yield* loadPage(lastItemId ?? undefined);
+                const updatedItemId = yield* select(selectLastItemId);
 
-                    // Append the page if nothing was updated during the request,
-                    // repeat otherwise
-                    if (lastItemId === updatedItemId) {
-                        yield* put(appendRedditPage(page));
-                        return;
-                    }
-                } catch (error) {
-                    yield call(displayError, error);
+                // Append the page if nothing was updated during the request,
+                // repeat otherwise
+                if (lastItemId === updatedItemId) {
+                    yield* put(appendRedditPage(page));
+                    return;
                 }
+            } catch (error) {
+                yield call(displayError, error);
             }
-        });
-    }
+        }
+    });
 }
 
 /**
  * Listen for user initiated refresh
  */
 export function* refreshSaga() {
-    yield* takeLatest(getType(refreshRedditPages), function* () {
+    yield* takeLeading(getType(refreshRedditPages), function* () {
         const firstPage = yield* call(loadRedditPage, {
-            subreddit: subreddit,
+            subreddit: subredditName,
         });
-        yield* put(appendRedditPage(firstPage));
+        yield* put(setRedditPages([firstPage]));
     });
 }
 
@@ -146,10 +139,12 @@ export function* refreshSaga() {
  */
 export function* btestSaga() {
     // Start data update loop
-    yield* all([fork(updateSaga), fork(loadNextPageSaga), fork(refreshSaga)]);
+    yield* fork(updateSaga);
+    yield* fork(loadNextPageSaga);
+    yield* fork(refreshSaga);
 
     // Trying to load locally stored pages
-    const storedPages = yield* call(loadLocalPages, subreddit);
+    const storedPages = yield* call(loadLocalPages, subredditName);
     if (storedPages) {
         yield* put(setRedditPages(storedPages));
     } else {
@@ -160,6 +155,6 @@ export function* btestSaga() {
     // Check for updates every minute
     while (true) {
         yield* put(checkForRedditUpdates());
-        yield* delay(60_000);
+        yield* delay(refreshInterval);
     }
 }

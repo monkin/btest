@@ -10,7 +10,7 @@ export function item(suffix: string): RedditItem {
     };
 }
 
-export function page(id: number, time = id * 60_000): RedditPage {
+export function page(id: number, time = id * 60000): RedditPage {
     return {
         responseTime: time,
         items: Array(20)

@@ -1,5 +1,6 @@
 import { createSelector } from "reselect";
 import { RedditItem, RedditPage } from "../api";
+import { refreshInterval } from "./const";
 import { BtestState } from "./reducer";
 
 export function selectRedditPages(state: BtestState) {
@@ -24,9 +25,9 @@ export const selectRedditItems = createSelector(selectRedditPages, pages => {
 /**
  * Last loaded reddit item id
  */
-export const selectLastItemId = createSelector(selectRedditItems, items =>
-    items.length ? items[items.length - 1].name : null,
-);
+export const selectLastItemId = createSelector(selectRedditItems, items => {
+    return items.length ? items[items.length - 1].name : null;
+});
 
 export const selectLastVisiblePage = createSelector(
     selectRedditPages,
@@ -53,11 +54,11 @@ export const selectPageToUpdate = createSelector(
         return (time: number) => {
             for (let i = 0; last !== null && i <= last; i++) {
                 const page = pages[i];
-                if (time - page.responseTime > 60_000) {
+                if (time - page.responseTime > refreshInterval) {
                     // if page is older than one minute
                     return {
                         index: i,
-                        from: i
+                        after: i
                             ? RedditPage.lastItem(pages[i - 1])?.name
                             : undefined,
                     };
