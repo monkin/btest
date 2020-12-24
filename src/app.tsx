@@ -1,6 +1,7 @@
 import React from "react";
 import { useSelector, Provider, useDispatch } from "react-redux";
 import { SafeAreaView, StatusBar } from "react-native";
+import FlashMessage from "react-native-flash-message";
 import {
     checkForRedditUpdates,
     createBtestStore,
@@ -49,6 +50,7 @@ export default function App() {
             <StatusBar />
             <SafeAreaView>
                 <RedditListConnected />
+                <FlashMessage position="bottom" />
             </SafeAreaView>
         </Provider>
     );

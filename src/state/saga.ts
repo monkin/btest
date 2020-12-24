@@ -9,6 +9,7 @@ import {
 } from "typed-redux-saga/macro";
 import { getType } from "typesafe-actions";
 import { loadLocalPages, loadRedditPage, saveLocalPages } from "../api";
+import { showMessage } from "react-native-flash-message";
 import {
     appendRedditPage,
     refreshRedditPages,
@@ -30,8 +31,9 @@ import {
 } from "./selectors";
 
 export function displayError(error: Error) {
-    setTimeout(() => {
-        throw error;
+    showMessage({
+        message: "Error",
+        description: error.message,
     });
 }
 
